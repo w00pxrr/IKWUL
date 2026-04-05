@@ -1,13 +1,460 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>IKWUL - I Know Where You Live</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IKWUL - I Know Where You Live</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='46' fill='none' viewBox='0 0 48 46'%3E%3Cpath fill='%23863bff' d='M25.946 44.938c-.664.845-2.021.375-2.021-.698V33.937a2.26 2.26 0 0 0-2.262-2.262H10.287c-.92 0-1.456-1.04-.92-1.788l7.48-10.471c1.07-1.497 0-3.578-1.842-3.578H1.237c-.92 0-1.456-1.04-.92-1.788L10.013.474c.214-.297.556-.474.92-.474h28.894c.92 0 1.456 1.04.92 1.788l-7.48 10.471c-1.07 1.498 0 3.579 1.842 3.579h11.377c.943 0 1.473 1.088.89 1.83L25.947 44.94z'/%3E%3C/svg%3E">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --text: #e8e8e8;
+      --accent: #00ff88;
+      --accent-secondary: #ff3366;
+      --muted: #444455;
+      font-synthesis: none;
+      text-rendering: optimizeLegibility;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: 'JetBrains Mono', monospace;
+      background: var(--bg);
+      color: var(--text);
+      overflow-x: hidden;
+    }
+
+    .app {
+      min-height: 100vh;
+      position: relative;
+    }
+
+    .starfield {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .star {
+      position: absolute;
+      background: #fff;
+      border-radius: 50%;
+      animation: twinkle 3s ease-in-out infinite;
+    }
+
+    @keyframes twinkle {
+      0%, 100% { opacity: 0.3; }
+      50% { opacity: 1; }
+    }
+
+    .scanlines {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 100;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0, 0, 0, 0.03) 2px,
+        rgba(0, 0, 0, 0.03) 4px
+      );
+    }
+
+    .header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      padding: 2rem;
+      text-align: center;
+      z-index: 50;
+      background: linear-gradient(to bottom, rgba(10, 10, 15, 0.9), transparent);
+    }
+
+    .title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 3rem;
+      font-weight: 900;
+      letter-spacing: 0.5rem;
+      color: var(--accent);
+      text-shadow: 
+        0 0 10px var(--accent),
+        0 0 30px var(--accent),
+        0 0 50px rgba(0, 255, 136, 0.5);
+      animation: glow 2s ease-in-out infinite alternate;
+    }
+
+    @keyframes glow {
+      from { text-shadow: 0 0 10px var(--accent), 0 0 30px var(--accent); }
+      to { text-shadow: 0 0 20px var(--accent), 0 0 50px var(--accent), 0 0 80px var(--accent); }
+    }
+
+    .tagline {
+      font-size: 0.9rem;
+      color: var(--muted);
+      letter-spacing: 0.3rem;
+      margin-top: 0.5rem;
+      text-transform: uppercase;
+    }
+
+    .start-screen {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 2rem;
+    }
+
+    .reveal-btn {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.2rem;
+      font-weight: 700;
+      padding: 1.5rem 3rem;
+      background: transparent;
+      border: 2px solid var(--accent);
+      color: var(--accent);
+      cursor: pointer;
+      letter-spacing: 0.2rem;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .reveal-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(0, 255, 136, 0.2), transparent);
+      transition: left 0.5s ease;
+    }
+
+    .reveal-btn:hover::before {
+      left: 100%;
+    }
+
+    .reveal-btn:hover {
+      background: rgba(0, 255, 136, 0.1);
+      box-shadow: 0 0 30px rgba(0, 255, 136, 0.3);
+    }
+
+    .reveal-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .error {
+      color: var(--accent-secondary);
+      font-size: 0.9rem;
+    }
+
+    .sections {
+      padding-top: 10rem;
+      padding-bottom: 5rem;
+      display: none;
+    }
+
+    .sections.active {
+      display: block;
+    }
+
+    .section {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 1rem;
+      opacity: 0;
+      transform: translateY(50px);
+      transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .section.revealed {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .section-icon {
+      font-size: 4rem;
+      filter: grayscale(0.5);
+      transition: filter 0.3s ease;
+    }
+
+    .section.revealed .section-icon {
+      filter: grayscale(0);
+    }
+
+    .section-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.3rem;
+      transition: color 0.3s ease;
+    }
+
+    .section.revealed .section-title {
+      color: var(--text);
+    }
+
+    .section-value {
+      font-size: 2.5rem;
+      font-weight: 500;
+      color: var(--accent);
+      text-shadow: 0 0 20px rgba(0, 255, 136, 0.5);
+      transition: all 0.5s ease;
+    }
+
+    .section.revealed .section-value {
+      animation: valueReveal 0.5s ease forwards;
+    }
+
+    @keyframes valueReveal {
+      from { opacity: 0; transform: scale(0.8); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    .scroll-indicator {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      animation: bounce 2s ease-in-out infinite;
+      color: var(--muted);
+      font-size: 1.5rem;
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateX(-50%) translateY(0); }
+      50% { transform: translateX(-50%) translateY(10px); }
+    }
+
+    @media (max-width: 768px) {
+      .title {
+        font-size: 2rem;
+        letter-spacing: 0.3rem;
+      }
+      
+      .section-icon {
+        font-size: 2.5rem;
+      }
+      
+      .section-title {
+        font-size: 1rem;
+      }
+      
+      .section-value {
+        font-size: 1.5rem;
+        text-align: center;
+        padding: 0 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="starfield"></div>
+    <div class="scanlines"></div>
+
+    <header class="header">
+      <h1 class="title">IKWUL</h1>
+      <p class="tagline">I Know Where You Live</p>
+    </header>
+
+    <div class="start-screen">
+      <button class="reveal-btn">▶ REVEAL MY LOCATION</button>
+      <p class="error" style="display: none;"></p>
+    </div>
+
+    <div class="sections"></div>
+
+    <div class="scroll-indicator">
+      <span>↓</span>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      const stars = [];
+      const seed = 12345;
+      const random = function(i) {
+        const x = Math.sin(seed + i) * 10000;
+        return x - Math.floor(x);
+      };
+      for (let i = 0; i < 200; i++) {
+        stars.push({
+          left: random(i) * 100 + '%',
+          top: random(i + 1) * 100 + '%',
+          animationDelay: random(i + 2) * 3 + 's',
+          width: random(i + 3) * 2 + 1 + 'px',
+          height: random(i + 4) * 2 + 1 + 'px'
+        });
+      }
+
+      const $starfield = $('.starfield');
+      stars.forEach(function(star) {
+        $starfield.append($('<div class="star"></div>').css(star));
+      });
+
+      const sections = [
+        { icon: '🌌', title: 'Galaxy', value: 'Milky Way' },
+        { icon: '☀️', title: 'Solar System', value: 'Sol (Local Group)' },
+        { icon: '🌍', title: 'Planet', value: 'Earth' },
+        { icon: '🗺️', title: 'Continent', value: '—' },
+        { icon: '🇺🇸', title: 'Country', value: '—' },
+        { icon: '🏛️', title: 'State/Province', value: '—' },
+        { icon: '📍', title: 'County', value: '—' },
+        { icon: '🏙️', title: 'City', value: '—' },
+        { icon: '🏠', title: 'Address', value: '—' },
+        { icon: '📌', title: 'Coordinates', value: '—' }
+      ];
+
+      let locationData = null;
+      let revealedSections = new Set();
+
+      function getContinent(lat) {
+        if (lat > 0) {
+          if (lat >= 71) return 'North America (Arctic)';
+          if (lat >= 23.5) return 'North America';
+          if (lat >= 0) return 'Africa';
+          return 'Europe/Asia';
+        }
+        if (lat >= -23.5) return 'South America';
+        return 'Antarctica';
+      }
+
+      function updateSectionValues() {
+        const data = locationData;
+        if (data) {
+          $('.section[data-index="3"] .section-value').text(data.continent);
+          $('.section[data-index="4"] .section-value').text(data.country);
+          $('.section[data-index="5"] .section-value').text(data.state);
+          $('.section[data-index="6"] .section-value').text(data.county);
+          $('.section[data-index="7"] .section-value').text(data.city);
+          $('.section[data-index="8"] .section-value').text(data.address);
+          $('.section[data-index="9"] .section-value').text(
+            data.latitude.toFixed(6) + '° N, ' + data.longitude.toFixed(6) + '° W'
+          );
+        }
+      }
+
+      function revealSection(index) {
+        if (revealedSections.has(index)) return;
+        revealedSections.add(index);
+        $('.section[data-index="' + index + '"]').addClass('revealed');
+      }
+
+      function buildSections() {
+        const $sections = $('.sections');
+        sections.forEach(function(section, index) {
+          const html = '<div class="section" data-index="' + index + '">' +
+            '<span class="section-icon">' + section.icon + '</span>' +
+            '<h2 class="section-title">' + section.title + '</h2>' +
+            '<p class="section-value">' + section.value + '</p>' +
+          '</div>';
+          $sections.append(html);
+        });
+      }
+
+      function checkIntersection() {
+        $('.section').each(function() {
+          const $el = $(this);
+          const index = parseInt($el.attr('data-index'));
+          const rect = this.getBoundingClientRect();
+          const isVisible = rect.top < window.innerHeight * 0.8 && rect.bottom > 0;
+          if (isVisible && !revealedSections.has(index)) {
+            revealSection(index);
+          }
+        });
+      }
+
+      function requestLocation() {
+        const $btn = $('.reveal-btn');
+        const $error = $('.error');
+        
+        $btn.prop('disabled', true).text('Locating you...');
+        $error.hide();
+
+        if (!navigator.geolocation) {
+          $error.text('Geolocation is not supported by your browser').show();
+          $btn.prop('disabled', false).text('▶ REVEAL MY LOCATION');
+          return;
+        }
+
+        navigator.geolocation.getCurrentPosition(
+          function(position) {
+            const latitude = position.coords.latitude;
+            const longitude = position.coords.longitude;
+
+            $.ajax({
+              url: 'https://nominatim.openstreetmap.org/reverse?format=json&lat=' + latitude + '&lon=' + longitude + '&zoom=18',
+              success: function(data) {
+                locationData = {
+                  latitude: latitude,
+                  longitude: longitude,
+                  continent: data.address && data.address.continent ? data.address.continent : getContinent(latitude),
+                  country: (data.address && data.address.country) ? data.address.country : 'Unknown',
+                  state: (data.address && (data.address.state || data.address.county)) ? (data.address.state || data.address.county) : 'Unknown',
+                  county: (data.address && data.address.county) ? data.address.county : 'Unknown',
+                  city: (data.address && (data.address.city || data.address.town || data.address.village)) ? (data.address.city || data.address.town || data.address.village) : 'Unknown',
+                  address: (data.address && data.address.road) ? ((data.address.house_number || '') + ' ' + data.address.road).trim() : 'Unknown'
+                };
+                
+                $btn.hide();
+                $('.start-screen').hide();
+                $('.sections').addClass('active');
+                
+                updateSectionValues();
+                checkIntersection();
+              },
+              error: function() {
+                $error.text('Failed to fetch location data').show();
+                $btn.prop('disabled', false).text('▶ REVEAL MY LOCATION');
+              }
+            });
+          },
+          function(err) {
+            $error.text(err.message).show();
+            $btn.prop('disabled', false).text('▶ REVEAL MY LOCATION');
+          }
+        );
+      }
+
+      buildSections();
+
+      $('.reveal-btn').on('click', function() {
+        requestLocation();
+      });
+
+      $(window).on('scroll', checkIntersection);
+      $(window).on('resize', checkIntersection);
+    })();
+  </script>
+</body>
 </html>
